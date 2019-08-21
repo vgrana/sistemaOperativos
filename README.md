@@ -12,7 +12,10 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
 - tpi-doc-so@listas.unq.edu.ar
  Cualquier duda de la materia que no es para todos los compañeros, envíenla a esta lista
- enviar el mail con copia a: fernando.garcia@unq.edu.ar hasta que se habilite la lista
+hasta que se habilite la lista  enviar el mail con copia a: 
+
+- Comision Práctica Miércoles: J Tondato , matias 
+- Comision Práctica Jueves:  fernando.garcia@unq.edu.ar , esteban 
 
 
 ## Libros usados en la cursada

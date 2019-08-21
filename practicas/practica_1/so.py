@@ -57,7 +57,7 @@ class Kernel():
         progSize = len(program.instructions)
         for index in range(0, progSize):
             inst = program.instructions[index]
-            HARDWARE.memory.put(index, inst)
+            HARDWARE.memory.write(index, inst)
 
     ## emulates a "system call" for programs execution  
     def run(self, program):

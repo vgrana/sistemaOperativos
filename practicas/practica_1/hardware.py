@@ -36,13 +36,18 @@ class ASM():
 class Memory():
 
     def __init__(self, size):
+        self._size = size
         self._cells = [''] * size
 
-    def put(self, addr, value):
+    def write(self, addr, value):
         self._cells[addr] = value
 
-    def get(self, addr):
+    def read(self, addr):
         return self._cells[addr]
+
+    @property
+    def size(self):
+        return self._size
 
     def __repr__(self):
         return tabulate(enumerate(self._cells), tablefmt='psql')
@@ -68,7 +73,7 @@ class Cpu():
 
 
     def _fetch(self):
-        self._ir = self._memory.get(self._pc)
+        self._ir = self._memory.read(self._pc)
         self._pc += 1
 
     def _decode(self):

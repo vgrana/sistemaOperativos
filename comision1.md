@@ -1,5 +1,5 @@
 | Alumno |  Legajo |  
-| |  --- |   ---  |   
+|  --- |   ---  |   
 | ALVAREZ, EMILIO LUCIANO | 32547 |
 | CANUHÉ, LAURA MABEL | 17568 |
 | CAPORALE CAMPAÑA, NATALIA SUSANA | 43736 |

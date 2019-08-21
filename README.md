@@ -26,7 +26,7 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
 ## Trabajos Prácticos
 
-Durante la materia iremos trabajando sobre un simulador básico de un sistema operativo que nos permita entender los conceptos que iremos desarrollando a lo largo de las clases. Como hemos mencionado, a esta altura carecemos de las herramientas para trabajar sobre un sistema operativo, aún de propósito didáctico como por ejemplo NachoOS. Por tal motivo elegimos trabajar con un simulador que nos permita enfocarnos en los conceptos estudiados.
+Durante la materia iremos trabajando sobre un simulador básico de un sistema operativo que nos permita entender los conceptos que iremos desarrollando a lo largo de las clases. Como hemos mencionado, a esta altura carecemos de las herramientas para trabajar sobre un sistema operativo, aún de propósito didáctico como por ejemplo Nacho OS. Por tal motivo elegimos trabajar con un simulador que nos permita enfocarnos en los conceptos estudiados.
 
 - [Intro a Python](./python/python_intro.md)
 

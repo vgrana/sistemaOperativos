@@ -36,6 +36,13 @@ Breve (muy breve) introducción a Python y al trabajo práctico.
 
 Algunos ejemplos de Python utilizados en la Introducción.
 
+
+
+### Git
+
+- [Git tutorial](http://rogerdudler.github.io/git-guide/)
+
+
 ## Slides de Prácticas
 - [Curso](./practicas/slides/00_curso.pdf)
 - [Git](./practicas/slides/00_git.pdf)

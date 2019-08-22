@@ -32,3 +32,4 @@
 | JANIKOW, MATIAS |  26315 (Comision Mie)| 
  
  
+Las x corresponden a los ausentes del primer dia

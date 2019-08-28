@@ -60,6 +60,6 @@ Algunos ejemplos de Python utilizados en la Introducción.
 
 | Fecha  | Practica   | Path |
 | ------ | --------   | ---------- |
-| 04/09  | Práctica 1 |  [REPO_GRUPO]/practica_1 |
+| 04/09  | Práctica 1 |  [REPO_GRUPO]/practicas/p1 |
 
 

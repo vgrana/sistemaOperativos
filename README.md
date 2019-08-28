@@ -56,10 +56,10 @@ Algunos ejemplos de Python utilizados en la Introducción.
 
 
 
-## Fechas de Entrega Comision Práctica Jueves
+## Fechas de Entrega por Comision de Práctica 
 
-| Fecha  | Practica   | Path |
-| ------ | --------   | ---------- |
-| 04/09  | Práctica 1 |  [REPO_GRUPO]/practicas/p1 |
+| C2 miercoles  | C1 Jueves  | Practica   | Path |
+| ------------- | ---------- | --------   | ---------- |
+|    04/09      | 04/09      | Práctica 1 |  [REPO_GRUPO]/practicas/p1 |
 
 

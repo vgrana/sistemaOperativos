@@ -15,7 +15,7 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
     Hasta que se habilite la lista  enviar el mail con copia a: 
     - Comision Práctica Miércoles: J Tondato , matiasmpereira@gmail.com 
-    - Comision Práctica Jueves:  fernando.garcia@unq.edu.ar , esteban 
+    - Comision Práctica Jueves:  fernando.garcia@unq.edu.ar , estebandh@gmail.com 
 
 
 ## Libros usados en la cursada

@@ -24,12 +24,12 @@
 | PATIÑO, AILIN SOFIA | 30963 |  4  |
 | PEREYRA, NAHUEL MATIAS | 29585 |    |
 | PEREZ, OSCAR ESTEBAN | 21129 |    |
-| RODRIGUEZ, BRENDA ESTEFANÍA | 32776 |    |
+| RODRIGUEZ, BRENDA ESTEFANÍA | 32776 |  7  |
 | ROMERO, EMILIANA AILEN | 46663 | 2   |
 | SANTOS, FRANCO FACUNDO | 40550 |  5  |
 | SVRZNJAK SPINELLI, FRANCISCO NAHUEL | 40756 | 5   |
 | TORRES, ALAN EZEQUIEL | 28741 |  1  |
-| JANIKOW, MATIAS |  26315 --- (Comision Mie)|    | 
+| JANIKOW, MATIAS |  26315 --- (Comision Mie)| 7   | 
 | VILLAVICENCIO, HECTOR FABIAN | 26783 --- (Comision Mie) | 1 |
  
 Las x corresponden a los ausentes del primer dia

@@ -29,7 +29,7 @@
 | SANTOS, FRANCO FACUNDO | 40550 |    |
 | SVRZNJAK SPINELLI, FRANCISCO NAHUEL | 40756 |    |
 | TORRES, ALAN EZEQUIEL | 28741 |    |
-| JANIKOW, MATIAS |  26315 (Comision Mie)|    | 
- 
+| JANIKOW, MATIAS |  26315 --- (Comision Mie)|    | 
+ | VILLAVICENCIO, HECTOR FABIAN | 26783 --- (Comision Mie) | 
  
 Las x corresponden a los ausentes del primer dia

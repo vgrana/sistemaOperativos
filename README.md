@@ -26,6 +26,10 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
 ## Slides de las Clases
 
+- [00-curso](./teoria/00-curso.pdf)
+- [01-intro](./teoria/01-intro.pdf)
+- [02-processes](./teoria/02-processes.pdf)
+
 
 ## Trabajos Prácticos
 

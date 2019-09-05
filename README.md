@@ -20,7 +20,7 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
 ## Libros usados en la cursada
 
-- Modern Operating Systems (Tanenaum)
+- Modern Operating Systems (Tanenbaum)
 - Operating System Concepts (Silberschatz)
 
 

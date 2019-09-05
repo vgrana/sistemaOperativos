@@ -66,6 +66,7 @@ Algunos ejemplos de Python utilizados en la Introducción.
 
 | C2 miercoles  | C1 Jueves  | Practica   | Path |
 | ------------- | ---------- | --------   | ---------- |
-|    04/09      | 04/09      | Práctica 1 |  [REPO_GRUPO]/practicas/p1 |
+|    04/09      | 04/09      | Práctica 1 |  [REPO_GRUPO]/practicas/practica_1 |
+|    11/09      | 11/09      | Práctica 1 |  [REPO_GRUPO]/practicas/practica_2 |
 
 

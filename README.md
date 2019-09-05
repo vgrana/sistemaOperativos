@@ -53,10 +53,12 @@ Algunos ejemplos de Python utilizados en la Introducción.
 ## Slides de Prácticas
 - [Curso](./practicas/slides/00_curso.pdf)
 - [Git](./practicas/slides/00_git.pdf)
+- [practica 1](./practicas/slides/practica1.pdf)
+- [practica 2](./practicas/slides/practica2.pdf)
 
 ## Prácticas
 - [Práctica 1 - Un Simulador "Extremadamente" Simplificado.](./practicas/practica_1) 
-
+- [Práctica 2 - Procesos - Clock - Interrupcion #KILL ](./practicas/practica_2) 
 
 
 

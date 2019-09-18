@@ -35,7 +35,7 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
 ## Práctica parcial
 - [scheduling](./parcial/scheduler/gantt_schedulers.md)
-- [scheduling tarea](./parcial/scheduler/practica_schedulers.md)
+- [scheduling práctica](./parcial/scheduler/practica_schedulers.md)
 
 
 

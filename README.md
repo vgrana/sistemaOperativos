@@ -30,6 +30,14 @@ En este respositorio se irá publicando material de la materia (slides, código,
 - [01-intro](./teoria/01-intro.pdf)
 - [02-processes](./teoria/02-processes.pdf)
 - [03-threads](./teoria/03-threads.pdf)
+- [04-scheduling](./teoria/04-scheduling.pdf)
+
+
+## Práctica parcial
+- [scheduling](./parcial/scheduler/gantt_schedulers.pdf)
+- [scheduling tarea](./parcial/scheduler/practica_schedulers.pdf)
+
+
 
 ## Trabajos Prácticos
 

@@ -64,12 +64,14 @@ Algunos ejemplos de Python utilizados en la Introducción.
 - [practica 1](./practicas/slides/practica1.pdf)
 - [practica 2](./practicas/slides/practica2.pdf)
 - [practica 3](./practicas/slides/practica3.pdf)
+- [practica 4](./practicas/slides/practica4.pdf)
 
 
 ## Prácticas
 - [Práctica 1 - Un Simulador "Extremadamente" Simplificado.](./practicas/practica_1) 
 - [Práctica 2 - Procesos - Clock - Interrupcion #KILL ](./practicas/practica_2) 
 - [Práctica 3 - Multiprogramación ](./practicas/practica_3) 
+- [Práctica 4 - Scheduler ](./practicas/practica_4) 
 
 
 
@@ -80,5 +82,6 @@ Algunos ejemplos de Python utilizados en la Introducción.
 |    04/09      | 04/09      | Práctica 1 |  [REPO_GRUPO]/practicas/practica_1 |
 |    11/09      | 12/09      | Práctica 2 |  [REPO_GRUPO]/practicas/practica_2 |
 |    02/10      | 03/10      | Práctica 3 |  [REPO_GRUPO]/practicas/practica_3 |
+|               | 24/10      | Práctica 4 |  [REPO_GRUPO]/practicas/practica_4 |
 
 

@@ -31,11 +31,27 @@ En este respositorio se irá publicando material de la materia (slides, código,
 - [02-processes](./teoria/02-processes.pdf)
 - [03-threads](./teoria/03-threads.pdf)
 - [04-scheduling](./teoria/04-scheduling.pdf)
+- [06-memory.pdf](./teoria/06-memory.pdf)
 
 
 ## Práctica parcial
-- [scheduling](./parcial/scheduler/gantt_schedulers.md)
-- [scheduling práctica](./parcial/scheduler/practica_schedulers.md)
+### Scheduler (Diagrama de GANTT)
+- [Ejemplo](./parcial/scheduler/gantt_schedulers.md)
+- [Ejercicios](./parcial/scheduler/practica_schedulers.md)
+
+### Memoria: Asignacion Continua
+- [Ejemplo](./practicas/parcial/mem_ac/memory-ac.md) 
+- [Ejercicios](./practicas/parcial/mem_ac/practica_memory-ac.md) 
+
+
+### Memoria Virtual: Selección de víctima
+- [Ejemplo](./practicas/parcial/mem_virtual/memory-virtual.md) 
+- [Ejercicios](./practicas/parcial/mem_virtual/practica_memory-virtual.md) 
+
+### Memoria Virtual: Page Fault
+- [Ejemplo](./practicas/parcial/pagefault/pageFault.md) 
+- [Ejercicios](./practicas/parcial/pagefault/practica_pageFault.md) 
+
 
 
 

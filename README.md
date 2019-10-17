@@ -35,22 +35,22 @@ En este respositorio se irá publicando material de la materia (slides, código,
 
 
 ## Práctica parcial
-### Scheduler (Diagrama de GANTT)
+#### Scheduler (Diagrama de GANTT)
 - [Ejemplo](./parcial/scheduler/gantt_schedulers.md)
 - [Ejercicios](./parcial/scheduler/practica_schedulers.md)
 
-### Memoria: Asignacion Continua
-- [Ejemplo](./practicas/parcial/mem_ac/memory-ac.md) 
-- [Ejercicios](./practicas/parcial/mem_ac/practica_memory-ac.md) 
+#### Memoria: Asignación Continua
+- [Ejemplo](./parcial/mem_ac/memory-ac.md) 
+- [Ejercicios](./parcial/mem_ac/practica_memory-ac.md) 
 
 
-### Memoria Virtual: Selección de víctima
-- [Ejemplo](./practicas/parcial/mem_virtual/memory-virtual.md) 
-- [Ejercicios](./practicas/parcial/mem_virtual/practica_memory-virtual.md) 
+#### Memoria Virtual: Selección de víctima
+- [Ejemplo](./parcial/mem_virtual/memory-virtual.md) 
+- [Ejercicios](./parcial/mem_virtual/practica_memory-virtual.md) 
 
-### Memoria Virtual: Page Fault
-- [Ejemplo](./practicas/parcial/pagefault/pageFault.md) 
-- [Ejercicios](./practicas/parcial/pagefault/practica_pageFault.md) 
+#### Memoria Virtual: Page Fault
+- [Ejemplo](./parcial/pagefault/pageFault.md) 
+- [Ejercicios](./parcial/pagefault/practica_pageFault.md) 
 
 
 

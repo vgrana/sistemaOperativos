@@ -113,6 +113,7 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         if (self.kernel.pcbTable.todosTerminados()):
             
             HARDWARE.switchOff()
+            log.logger.info("gantt {}" .format(self.kernel.gantt))
         else :
             # next_Pcb = self.kernel.readyQueue.pop(0)
             if (not self.kernel.readyQueue.isEmpty()) :
@@ -148,9 +149,9 @@ class Kernel():
     def __init__(self):
         self.loader = Loader()
         self.pcbTable = PCBTable()
-        # self.readyQueue= []
         self.readyQueue= ReadyQueue()
         self.dispatcher= Dispatcher()
+        self.gantt= Gantt(self)
             
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
@@ -161,6 +162,10 @@ class Kernel():
 
         ioOutHandler = IoOutInterruptionHandler(self)
         HARDWARE.interruptVector.register(IO_OUT_INTERRUPTION_TYPE, ioOutHandler)
+        
+        
+        HARDWARE.clock.addSubscriber(self.gantt)
+        
 
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)
@@ -264,37 +269,6 @@ class PCBTable() :
         return True        
                 
                 
-                
-                
-                
-# class Gantt():
-        
-#     def __init__(self,kernel):
-#         self._ticks = []
-#         self._kernel = kernel
-   
-#     def tick (self,tickNbr):
-#         log.logger.info("guardando informacion de los estados de los PCBs en el tick N {}".format(tickNbr))
-#         pcbYEstado = dict()
-#         pcbTable = self._kernel.pcbTable.pcbTable
-#         for pid in pcbTable:
-#             pcb = pcbTable.get(pid)
-#             pcbYEstado[pid] = pcb.state.value
-#         self._ticks.append(pcbYEstado)
-  
-#     def __repr__(self):
-#         return tabulate(enumerate(self._ticks), tablefmt='grid')
-
-
-# Por supuesto así nomás no va a andar, tienen que cambiar las cosas según su implementación.
-
-# Además:
-#  * En la inicializacion del kernel construir un Gantt y vuardarlo en un atributo `gantt` del mismo
-#  * En la inicialización del kernel tambien, agregarlo como observer del clock (a través del objeto Hardware)
-#  * En el kill handler, depsués de apagar el hardware, loguen self.kernel.gantt
-
-            
-                
 class Dispatcher() :
     def load (self,pcb):
         log.logger.info("loading {} ".format(pcb))
@@ -323,6 +297,37 @@ class ReadyQueue():
     def isEmpty(self):
         return len(self.pcbs ) == 0
 
+                
+                
+                
+class Gantt():
+        
+    def __init__(self,kernel):
+        self._ticks = []
+        self._kernel = kernel
+   
+    def tick (self,tickNbr):
+        log.logger.info("guardando información de los estados de los PCBs en el tick N {}".format(tickNbr))
+        pcbYEstado = dict()
+        pcbTable = self._kernel.pcbTable.pcbs
+        for pid,pcb in pcbTable.items():
+            # obtengo el valor de cuya clave es pid
+            
+            pcbYEstado[pid] = pcb.state
+        self._ticks.append(pcbYEstado)
+  
+    def __repr__(self):
+        return tabulate(enumerate(self._ticks), tablefmt='grid')
+
+# Por supuesto así nomás no va a andar, tienen que cambiar las cosas según su implementación.
+
+# Además:
+#  * En la inicializacion del kernel construir un Gantt y vuardarlo en un atributo `gantt` del mismo
+#  * En la inicialización del kernel tambien, agregarlo como observer del clock (a través del objeto Hardware)
+#  * En el kill handler, depsués de apagar el hardware, loguen self.kernel.gantt
+
+            
+                
     
     
     

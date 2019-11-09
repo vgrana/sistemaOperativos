@@ -1,8 +1,13 @@
 #!/usr/bin/env python
-
 from hardware import *
 import log
+from so import *
 
+RUNNING= 'RUNNING'
+TERMINATED= 'TERMINATED'
+WAITING= 'WAITING'
+READY= 'READY'
+NEW= 'NEW'
 
 
 ## emulates a compiled program
@@ -96,9 +101,29 @@ class AbstractInterruptionHandler():
 class KillInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
-        log.logger.info(" Program Finished ")
-        HARDWARE.cpu.pc = -1  ## dejamos el CPU IDLE
-
+        log.logger.info(" Program Finished ")    
+        # cambiar por preguntar al pcbtable si todos los procesos terminaro
+        
+        procesoCorriendo= self.kernel.pcbTable.pcbCorriendo()
+        if (procesoCorriendo != None):
+            procesoCorriendo.state= TERMINATED
+            self.kernel.dispatcher.save(procesoCorriendo)
+               
+        
+        if (self.kernel.pcbTable.todosTerminados()):
+            
+            HARDWARE.switchOff()
+        else :
+            # next_Pcb = self.kernel.readyQueue.pop(0)
+            if (not self.kernel.readyQueue.isEmpty()) :
+                next_Pcb = self.kernel.readyQueue.pop()
+                self.kernel.dispatcher.load(next_Pcb)
+                
+# dejar el pcb que terminaste de ejecutar en "Terminated", 
+#  y usar el loader para removerlo haciendo un save.
+# Para saber que proceso terminó podés usar la PCBTable
+#  para obtener el proceso que esté en estado "Running"
+   
 class IoInInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
@@ -121,6 +146,12 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
 class Kernel():
 
     def __init__(self):
+        self.loader = Loader()
+        self.pcbTable = PCBTable()
+        # self.readyQueue= []
+        self.readyQueue= ReadyQueue()
+        self.dispatcher= Dispatcher()
+            
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
         HARDWARE.interruptVector.register(KILL_INTERRUPTION_TYPE, killHandler)
@@ -138,23 +169,176 @@ class Kernel():
     @property
     def ioDeviceController(self):
         return self._ioDeviceController
-
-    def load_program(self, program):
-        # loads the program in main memory
-        progSize = len(program.instructions)
-        for index in range(0, progSize):
-            inst = program.instructions[index]
-            HARDWARE.memory.write(index, inst)
-
-    ## emulates a "system call" for programs execution
+           
+           
+    ## emulates a "system call" for programs executionself.loader.load(program)
     def run(self, program):
-        self.load_program(program)
+        # self.load_program(program)
+        base =self.loader.load(program)
+        pcb = PCB(program, base)
+        self.pcbTable.table(pcb)
+        if(self.pcbTable.pcbCorriendo() == None):
+            self.dispatcher.load(pcb)
+        else :
+            self.readyQueue.push(pcb)
+            pcb.state= READY
+      
         log.logger.info("\n Executing program: {name}".format(name=program.name))
+        log.logger.info("\n Executing pcbTable, estado:{}, pid:{}: , pc: {}".format(pcb.state,pcb.baseDir,pcb.pc ))
         log.logger.info(HARDWARE)
-
+       
+# pc al cpu o deadyQueue?
         # set CPU program counter at program's first intruction
-        HARDWARE.cpu.pc = 0
+     
+        
+        # armo pcb y le paso a pcb table el pcb
 
-
+    def run_batch(self,batch):
+        ##si la lista no esta vacia saco el primero y lo ejecuto, y el resto lo mado al readQueue
+        for i in batch:
+            self.run(i)
+            
+    
     def __repr__(self):
         return "Kernel "
+
+class Loader():
+    def __init__(self) :
+        self.baseDir_Proximo = 0
+    
+    def load(self, program) :
+        progSize = len(program.instructions)
+        for prog in range(0, progSize):
+            inst = program.instructions[prog]
+            HARDWARE.memory.write(prog + self.baseDir_Proximo, inst)
+        self.baseDir_Proximo += progSize
+        # retorna la basedir en donde va a comenzar le siguiente programa
+        return (self.baseDir_Proximo - progSize)
+            
+# class PCB(program, base):   
+class PCB():   
+    def __init__(self,program,base) :
+        self.pid= 0 
+        self.pc = 0
+        self.state = NEW
+        self.baseDir = base
+        self.path= program.name 
+        
+    def __repr__(self) :
+        return "pid {} state {} pc {} path {} basedir{}".format(self.pid, self.state, self.pc, self.path, self.baseDir)   
+    
+        
+class PCBTable() :
+    def __init__(self) :
+        self._pid = 0
+        self.pcbs = { }
+
+    def __repr__(self) :
+        return tabulate(enumerate(self.pcbs), tablefmt='psql')
+           
+    def table(self, pcb):
+        _pidNuevo=self._pid
+        self.pcbs[_pidNuevo] = pcb
+        pcb.pid = _pidNuevo
+        self._pid +=1 
+        
+        
+        # tableMostrar=repr(self.pcbs)
+        # print(tableMostrar) 
+        # log.logger.info("\n Executing pcb: {pcb}".format(name=pcb.state))
+        # {} nombre cualquiera, y en cualquiera pido lo que quiera q me muestre
+        
+        # hacer for q nos de el pcb.runnin
+    def pcbCorriendo(self):
+        for k,v in self.pcbs.items():
+            if(v.state == RUNNING):
+                return v
+            
+        return None
+    
+    def todosTerminados(self):
+        for k,v in self.pcbs.items():
+            if(v.state != TERMINATED):
+                return False
+                
+        return True        
+                
+                
+                
+                
+                
+# class Gantt():
+        
+#     def __init__(self,kernel):
+#         self._ticks = []
+#         self._kernel = kernel
+   
+#     def tick (self,tickNbr):
+#         log.logger.info("guardando informacion de los estados de los PCBs en el tick N {}".format(tickNbr))
+#         pcbYEstado = dict()
+#         pcbTable = self._kernel.pcbTable.pcbTable
+#         for pid in pcbTable:
+#             pcb = pcbTable.get(pid)
+#             pcbYEstado[pid] = pcb.state.value
+#         self._ticks.append(pcbYEstado)
+  
+#     def __repr__(self):
+#         return tabulate(enumerate(self._ticks), tablefmt='grid')
+
+
+# Por supuesto así nomás no va a andar, tienen que cambiar las cosas según su implementación.
+
+# Además:
+#  * En la inicializacion del kernel construir un Gantt y vuardarlo en un atributo `gantt` del mismo
+#  * En la inicialización del kernel tambien, agregarlo como observer del clock (a través del objeto Hardware)
+#  * En el kill handler, depsués de apagar el hardware, loguen self.kernel.gantt
+
+            
+                
+class Dispatcher() :
+    def load (self,pcb):
+        log.logger.info("loading {} ".format(pcb))
+        HARDWARE.cpu.pc = pcb.pc
+        HARDWARE.mmu.baseDir= pcb.baseDir        
+        pcb.state= RUNNING
+        
+    def save(self,pcb) :
+        log.logger.info("saving {} ".format(pcb))
+        pcb.pc= HARDWARE.cpu.pc
+        HARDWARE.cpu.pc = -1
+        #    # sino queda ninguno vuelve a -1, y sino incrementa
+        
+        
+class ReadyQueue():
+    pcbs= []
+    # enque cambiar por push
+    def push(self, pcb):
+        pcb.state= READY
+        self.pcbs.append(pcb)
+   
+    # deque cambiar por
+    def pop (self):
+        return  self.pcbs.pop(0)
+
+    def isEmpty(self):
+        return len(self.pcbs ) == 0
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

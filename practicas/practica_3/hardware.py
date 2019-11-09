@@ -69,6 +69,7 @@ class InterruptVector():
 
     def handle(self, irq):
         log.logger.info("Handling {type} irq with parameters = {parameters}".format(type=irq.type, parameters=irq.parameters ))
+        # libera
         self.lock.acquire()
         self._handlers[irq.type].execute(irq)
         self.lock.release()
@@ -117,7 +118,7 @@ class Clock():
 
 ## emulates the main memory (RAM)
 class Memory():
-
+# direccion fisica
     def __init__(self, size):
         self._size = size
         self._cells = [''] * size
@@ -138,7 +139,7 @@ class Memory():
 
 ## emulates the Memory Management Unit (MMU)
 class MMU():
-
+    # tiene direccion base q cambia y a partir de esa la convierte en fisica
     def __init__(self, memory):
         self._memory = memory
         self._baseDir = 0
@@ -170,7 +171,7 @@ class MMU():
 
 ## emulates the main Central Processor Unit
 class Cpu():
-
+# recibe mmu
     def __init__(self, mmu, interruptVector):
         self._mmu = mmu
         self._interruptVector = interruptVector
@@ -188,6 +189,7 @@ class Cpu():
 
 
     def _fetch(self):
+        # mmu anda a buscar la direccion logica
         self._ir = self._mmu.fetch(self._pc)
         self._pc += 1
 
@@ -197,6 +199,8 @@ class Cpu():
 
     def _execute(self):
         if ASM.isEXIT(self._ir):
+            # ir=i/o instruccion impresora,disco rigido,ir paso por parametro el dispositivo,
+            # en el handlre lo identifico 
             killIRQ = IRQ(KILL_INTERRUPTION_TYPE)
             self._interruptVector.handle(killIRQ)
         elif ASM.isIO(self._ir):
@@ -253,6 +257,7 @@ class AbstractIODevice():
             self._ticksCount += 1
             if (self._ticksCount > self._deviceTime):
                 ## operation execution has finished
+                # estado disponible
                 self._busy = False
                 ioOutIRQ = IRQ(IO_OUT_INTERRUPTION_TYPE, self._deviceId)
                 HARDWARE.interruptVector.handle(ioOutIRQ)

@@ -8,6 +8,7 @@ TERMINATED= 'TERMINATED'
 WAITING= 'WAITING'
 READY= 'READY'
 NEW= 'NEW'
+TICK_IO= 3 
 
 
 ## emulates a compiled program
@@ -55,13 +56,24 @@ class IoDeviceController():
 
     def __init__(self, device):
         self._device = device
-        self._waiting_queue = []
+        self.waitingQueue = []
         self._currentPCB = None
+        # self.waitingQueue= WaitingQueue()
 
-    def runOperation(self, pcb, instruction):
+    # def runOperation(self, pcb, instruction):
+    def runOperation(self,pcb,instruction):
+        # pcb.state= WAITING
+        log.logger.info("agrego a la waitingQueue pcb ={}, instruction ={}".format(pcb,instruction))
         pair = {'pcb': pcb, 'instruction': instruction}
         # append: adds the element at the end of the queue
-        self._waiting_queue.append(pair)
+        # self._waiting_queue.append(pair)
+        ######################3
+        
+        #  hacer en la waitin el cambio de estado pcb.state= WAITING
+        self.waitingQueue.append(pair)
+        
+        ############################
+        # self._waiting_queue.append(pcb)
         # try to send the instruction to hardware's device (if is idle)
         self.__load_from_waiting_queue_if_apply()
 
@@ -72,10 +84,11 @@ class IoDeviceController():
         return finishedPCB
 
     def __load_from_waiting_queue_if_apply(self):
-        if (len(self._waiting_queue) > 0) and self._device.is_idle:
+        # if (len(self.waitingQueue) > 0) and self._device.is_idle:
+        if (len (self.waitingQueue) >=1)  and self._device.is_idle:
             ## pop(): extracts (deletes and return) the first element in queue
-            pair = self._waiting_queue.pop(0)
-            #print(pair)
+            pair = self.waitingQueue.pop(0)
+            print(pair)
             pcb = pair['pcb']
             instruction = pair['instruction']
             self._currentPCB = pcb
@@ -83,8 +96,8 @@ class IoDeviceController():
 
 
     def __repr__(self):
-        return "IoDeviceController for {deviceID} running: {currentPCB} waiting: {waiting_queue}".format(deviceID=self._device.deviceId, currentPCB=self._currentPCB, waiting_queue=self._waiting_queue)
-
+        return "IoDeviceController for {} running: {}  in waiting: {}".format(self._device.deviceId, self._currentPCB, self.waitingQueue)
+        #  return "IoDeviceController for waiting: {}".format(self.waitingQueue)
 ## emulates the  Interruptions Handlers
 class AbstractInterruptionHandler():
     def __init__(self, kernel):
@@ -108,17 +121,13 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         if (procesoCorriendo != None):
             procesoCorriendo.state= TERMINATED
             self.kernel.dispatcher.save(procesoCorriendo)
-               
-        
-        if (self.kernel.pcbTable.todosTerminados()):
             
+        if (not self.kernel.readyQueue.isEmpty()) :
+            next_Pcb = self.kernel.readyQueue.dequeue()
+            self.kernel.dispatcher.load(next_Pcb)
+        elif (self.kernel.pcbTable.todosTerminados()):
             HARDWARE.switchOff()
             log.logger.info("gantt {}" .format(self.kernel.gantt))
-        else :
-            # next_Pcb = self.kernel.readyQueue.pop(0)
-            if (not self.kernel.readyQueue.isEmpty()) :
-                next_Pcb = self.kernel.readyQueue.pop()
-                self.kernel.dispatcher.load(next_Pcb)
                 
 # dejar el pcb que terminaste de ejecutar en "Terminated", 
 #  y usar el loader para removerlo haciendo un save.
@@ -130,9 +139,29 @@ class IoInInterruptionHandler(AbstractInterruptionHandler):
     def execute(self, irq):
         operation = irq.parameters
         pcb = {'pc': HARDWARE.cpu.pc} # porque hacemos esto ???
-        HARDWARE.cpu.pc = -1   ## dejamos el CPU IDLE
+        # pcPcb = HARDWARE.cpu.pc
+        # pcb=self.kernel.pcbTable.pcbCorriendo()
+        # pcb.pc= HARDWARE.cpu.pc
+      
+        HARDWARE.cpu.pc = -1
+        # pcbCorriendo=self.kernel.readyQueue.dequeue()
+        ## dejamos el CPU IDLE
         self.kernel.ioDeviceController.runOperation(pcb, operation)
+        
+        ################3333
+        if (not self.kernel.readyQueue.isEmpty()) :
+            next_Pcb = self.kernel.readyQueue.dequeue()
+            self.kernel.dispatcher.load(next_Pcb)
+                
+       
+        
+       ##########################################
+        
+        
         log.logger.info(self.kernel.ioDeviceController)
+        
+    #    viene un IO_IN , llamo al IOController y lo pongo en la watingQueue.
+    #    saco el proximo pcb de la ReadyQueue y lo pongo a correr
 
 
 class IoOutInterruptionHandler(AbstractInterruptionHandler):
@@ -140,7 +169,8 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
     def execute(self, irq):
         pcb = self.kernel.ioDeviceController.getFinishedPCB()
         HARDWARE.cpu.pc = pcb['pc']
-        log.logger.info(self.kernel.ioDeviceController)
+        # HARDWARE.cpu.pc = pcb.pc
+        log.logger.info("hola  estoy en el IoOut{}" .format(self.kernel.ioDeviceController))
 
 
 # emulates the core of an Operative System
@@ -152,6 +182,7 @@ class Kernel():
         self.readyQueue= ReadyQueue()
         self.dispatcher= Dispatcher()
         self.gantt= Gantt(self)
+       
             
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
@@ -166,9 +197,13 @@ class Kernel():
         
         HARDWARE.clock.addSubscriber(self.gantt)
         
-
+       
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)
+       
+       
+        
+        
 
 
     @property
@@ -185,7 +220,7 @@ class Kernel():
         if(self.pcbTable.pcbCorriendo() == None):
             self.dispatcher.load(pcb)
         else :
-            self.readyQueue.push(pcb)
+            self.readyQueue.enqueue(pcb)
             pcb.state= READY
       
         log.logger.info("\n Executing program: {name}".format(name=program.name))
@@ -228,6 +263,9 @@ class PCB():
         self.state = NEW
         self.baseDir = base
         self.path= program.name 
+    
+    def __getitem__(self,pc):
+            return self.pc    
         
     def __repr__(self) :
         return "pid {} state {} pc {} path {} basedir{}".format(self.pid, self.state, self.pc, self.path, self.baseDir)   
@@ -240,19 +278,13 @@ class PCBTable() :
 
     def __repr__(self) :
         return tabulate(enumerate(self.pcbs), tablefmt='psql')
-           
+             
     def table(self, pcb):
         _pidNuevo=self._pid
         self.pcbs[_pidNuevo] = pcb
         pcb.pid = _pidNuevo
         self._pid +=1 
-        
-        
-        # tableMostrar=repr(self.pcbs)
-        # print(tableMostrar) 
-        # log.logger.info("\n Executing pcb: {pcb}".format(name=pcb.state))
-        # {} nombre cualquiera, y en cualquiera pido lo que quiera q me muestre
-        
+                   
         # hacer for q nos de el pcb.runnin
     def pcbCorriendo(self):
         for k,v in self.pcbs.items():
@@ -268,7 +300,11 @@ class PCBTable() :
                 
         return True        
                 
-                
+    def procesosWaiting(self):
+        for k,v in self.pcbs.items():
+            if(v.state == WAITING):
+                return True
+
 class Dispatcher() :
     def load (self,pcb):
         log.logger.info("loading {} ".format(pcb))
@@ -285,15 +321,15 @@ class Dispatcher() :
         
 class ReadyQueue():
     pcbs= []
-    # enque cambiar por push
-    def push(self, pcb):
+    # enqueue cambiar por push, encola
+    def enqueue(self, pcb):
         pcb.state= READY
         self.pcbs.append(pcb)
    
-    # deque cambiar por
-    def pop (self):
-        return  self.pcbs.pop(0)
-
+    # dequeue cambiar pop, desencola
+    def dequeue (self):
+        return self.pcbs.pop(0)
+        
     def isEmpty(self):
         return len(self.pcbs ) == 0
 
@@ -322,16 +358,28 @@ class Gantt():
 # Por supuesto así nomás no va a andar, tienen que cambiar las cosas según su implementación.
 
 # Además:
-#  * En la inicializacion del kernel construir un Gantt y vuardarlo en un atributo `gantt` del mismo
+#  * En la inicializacion del kernel construir un Gantt y vuardarlo en un atributo `gantt` del mismopcbsWaitingpcbsWaiting
 #  * En la inicialización del kernel tambien, agregarlo como observer del clock (a través del objeto Hardware)
 #  * En el kill handler, depsués de apagar el hardware, loguen self.kernel.gantt
 
-            
-                
+  
+    # recibe el pcb le cambia estado a waititng, y pone al q esta en el la lista de espera lo manda a ejecutar
     
-    
-    
-    
+class WaitingQueue():
+    pcbsWaiting= []
+    # enqueue cambiar por push, encola
+    def enqueue(self, pair):
+       
+        pcbsWaiting[pair.pcb] = pair.instruction 
+        
+        
+   
+    # dequeue cambiar pop, desencola
+    def dequeue (self):
+        return  self.pcbsWaiting.pop(0)
+
+    def isEmpty(self):
+        return len(self.pcbsWaiting ) == 0
     
     
     

@@ -8,7 +8,7 @@ TERMINATED= 'TERMINATED'
 WAITING= 'WAITING'
 READY= 'READY'
 NEW= 'NEW'
-TICK_IO= 3 
+
 
 
 ## emulates a compiled program
@@ -56,43 +56,42 @@ class IoDeviceController():
 
     def __init__(self, device):
         self._device = device
-        self.waitingQueue = []
         self._currentPCB = None
-        # self.waitingQueue= WaitingQueue()
+        self.waitingQueue= WaitingQueue()
 
-    # def runOperation(self, pcb, instruction):
-    def runOperation(self,pcb,instruction):
-        # pcb.state= WAITING
-        log.logger.info("agrego a la waitingQueue pcb ={}, instruction ={}".format(pcb,instruction))
-        pair = {'pcb': pcb, 'instruction': instruction}
-        # append: adds the element at the end of the queue
-        # self._waiting_queue.append(pair)
-        ######################3
+    def runOperation(self,_pcbCorriendo, _instruction):
+        _pcbCorriendo.state=WAITING
+        pair = {'pcb': _pcbCorriendo, 'instruction': _instruction}
+        # si lo manda a la impresora o lo encola.
+        # lo encola si la impresora esta ocupada,
+        # sino lo manda al device execute
+        # idle desocupado 
+        if(HARDWARE.ioDevice.is_idle):
+            self._device.execute(_instruction)
+            self._currentPCB=_pcbCorriendo
+        # //metodo q haga esas 2 cosas
+        else:
+            self.waitingQueue.enqueue(pair)
+            
         
-        #  hacer en la waitin el cambio de estado pcb.state= WAITING
-        self.waitingQueue.append(pair)
         
-        ############################
-        # self._waiting_queue.append(pcb)
-        # try to send the instruction to hardware's device (if is idle)
-        self.__load_from_waiting_queue_if_apply()
-
     def getFinishedPCB(self):
         finishedPCB = self._currentPCB
         self._currentPCB = None
-        self.__load_from_waiting_queue_if_apply()
         return finishedPCB
 
-    def __load_from_waiting_queue_if_apply(self):
+    def ejecutarDeWaitingQueue(self):
+        log.logger.info("en controller los q saco de la waitingQueue={}".format(self._currentPCB))
         # if (len(self.waitingQueue) > 0) and self._device.is_idle:
-        if (len (self.waitingQueue) >=1)  and self._device.is_idle:
+        if (not self.waitingQueue.isEmpty())  and self._device.is_idle:
             ## pop(): extracts (deletes and return) the first element in queue
-            pair = self.waitingQueue.pop(0)
-            print(pair)
+            pair = self.waitingQueue.dequeue()
+            # print(pair)
             pcb = pair['pcb']
             instruction = pair['instruction']
             self._currentPCB = pcb
             self._device.execute(instruction)
+
 
 
     def __repr__(self):
@@ -138,22 +137,24 @@ class IoInInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         operation = irq.parameters
-        pcb = {'pc': HARDWARE.cpu.pc} # porque hacemos esto ???
-        # pcPcb = HARDWARE.cpu.pc
-        # pcb=self.kernel.pcbTable.pcbCorriendo()
-        # pcb.pc= HARDWARE.cpu.pc
+        pcbCorriendo= self.kernel.pcbTable.pcbCorriendo()
+       
+        # log.logger.info("estado del pcb : {}, pc: {} name: {} base dir: {}". format(pcb1.state, pcb,pcb1.path, pcb1.baseDir)) 
+        # log.logger.info("estado del pcb del : {} ". format(pcbTable)) 
       
-        HARDWARE.cpu.pc = -1
-        # pcbCorriendo=self.kernel.readyQueue.dequeue()
-        ## dejamos el CPU IDLE
-        self.kernel.ioDeviceController.runOperation(pcb, operation)
+        self.kernel.dispatcher.save(pcbCorriendo)
+        # log.logger.info("estado del pcb que saque del dispatchet : {}, pc: {}". format(pcbTable, pcbCorriendo))
+        # log.logger.info("estado del pcb state : {}, pc: {} name:{}". format(pcb1.state, pcb1.pc, pcb1.path))
+        # self.kernel.ioDeviceController.waitingQueue.enqueue(pcbCorriendo)
+        self.kernel.ioDeviceController.runOperation(pcbCorriendo, operation)
+        self.ejecutarEnDispactcher() 
         
-        ################3333
-        if (not self.kernel.readyQueue.isEmpty()) :
+        
+    def ejecutarEnDispactcher(self):
+        if (not self.kernel.readyQueue.isEmpty()):
             next_Pcb = self.kernel.readyQueue.dequeue()
             self.kernel.dispatcher.load(next_Pcb)
                 
-       
         
        ##########################################
         
@@ -168,10 +169,25 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         pcb = self.kernel.ioDeviceController.getFinishedPCB()
-        HARDWARE.cpu.pc = pcb['pc']
-        # HARDWARE.cpu.pc = pcb.pc
-        log.logger.info("hola  estoy en el IoOut{}" .format(self.kernel.ioDeviceController))
+        log.logger.info("hola  estoy en el IoOut {}" .format(pcb))
 
+        
+
+# si el cpu no esta libre lo encolo en la ready que sino lo mando a ejecutar|
+# sino esta running en el pcb table es q esta libre
+        if (not self.kernel.pcbTable.pcbCorriendo()): 
+            self.kernel.dispatcher.load(pcb)
+            log.logger.info("hola  estoy en el IoOut no esta corriendo{}" .format(pcb))
+        else:
+            pcb.state= READY 
+            self.kernel.readyQueue.enqueue(pcb)
+            
+        self.kernel.ioDeviceController.ejecutarDeWaitingQueue()
+    # si hay alguien en la waitingque, lo saco
+
+    # Lo que hay que hacer es mandar el proceso que está en ese device a la ready queue o
+    # al cpu (dependiendo de si el cpu estaba ocupado o no). 
+    # Además, si había algún otro proceso en la waiting queue lo manda a ejecutar al device.
 
 # emulates the core of an Operative System
 class Kernel():
@@ -196,15 +212,8 @@ class Kernel():
         
         
         HARDWARE.clock.addSubscriber(self.gantt)
-        
-       
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)
-       
-       
-        
-        
-
 
     @property
     def ioDeviceController(self):
@@ -368,9 +377,10 @@ class Gantt():
 class WaitingQueue():
     pcbsWaiting= []
     # enqueue cambiar por push, encola
-    def enqueue(self, pair):
+    def enqueue(self, pcb):
+    #    pcb.state= WAITING
+       self.pcbsWaiting.append(pcb)
        
-        pcbsWaiting[pair.pcb] = pair.instruction 
         
         
    

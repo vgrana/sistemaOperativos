@@ -22,12 +22,12 @@ if __name__ == '__main__':
 
     ##  create a program
     
-    prg2 = Program("prg2.exe", [ASM.CPU(4), ASM.IO(),ASM.CPU(1)])
-    prg3 = Program("prg3.exe", [ASM.CPU(2)])
+    prg1= Program("prg1.exe", [ASM.CPU(1), ASM.IO(),ASM.CPU(1)])
+    prg2 = Program("prg2.exe", [ASM.CPU(2),ASM.IO(),ASM.CPU(2)])
     prg = Program("test.exe", [ASM.CPU(2), ASM.CPU(3), ASM.CPU(3)])
-    prg1 = Program("prg1.exe", [ASM.CPU(2), ASM.IO(),ASM.CPU(3),])
+    prg3 = Program("prg3.exe", [ASM.CPU(2),ASM.CPU(1),])
     
-    batch=[prg2,prg3,prg1]
+    batch=[prg1,prg2]
     # execute the program
     ##kernel.run(prg)
     kernel.run_batch(batch)

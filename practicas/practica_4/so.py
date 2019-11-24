@@ -10,11 +10,8 @@ WAITING= 'WAITING'
 READY= 'READY'
 NEW= 'NEW'
 
-
-
 ## emulates a compiled program
 class Program():
-
     def __init__(self, name, instructions):
         self._name = name
         self._instructions = self.expand(instructions)
@@ -54,7 +51,6 @@ class Program():
 
 ## emulates an Input/Output device controller (driver)
 class IoDeviceController():
-
     def __init__(self, device):
         self._device = device
         self._currentPCB = None
@@ -70,7 +66,6 @@ class IoDeviceController():
         if(HARDWARE.ioDevice.is_idle):
             self._device.execute(_instruction)
             self._currentPCB=_pcbCorriendo
-        # //metodo q haga esas 2 cosas
         else:
             self.waitingQueue.enqueue(pair)
         
@@ -80,7 +75,6 @@ class IoDeviceController():
         return finishedPCB
 
     def ejecutarDeWaitingQueue(self):
-        log.logger.info("en controller los q saco de la waitingQueue={}".format(self._currentPCB))
         if (not self.waitingQueue.isEmpty())  and self._device.is_idle:
             pair = self.waitingQueue.dequeue()
             pcb = pair['pcb']
@@ -90,12 +84,12 @@ class IoDeviceController():
 
     def __repr__(self):
         return "IoDeviceController for {} running: {}  in waiting: {}".format(self._device.deviceId, self._currentPCB, self.waitingQueue)
-        #  return "IoDeviceController for waiting: {}".format(self.waitingQueue)
+        
 ## emulates the  Interruptions Handlers
 class AbstractInterruptionHandler():
     def __init__(self, kernel):
         self._kernel = kernel
-
+        
     @property
     def kernel(self):
         return self._kernel
@@ -103,20 +97,24 @@ class AbstractInterruptionHandler():
     def execute(self, irq):
         log.logger.error("-- EXECUTE MUST BE OVERRIDEN in class {classname}".format(classname=self.__class__.__name__))
 
-
 class KillInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
-        log.logger.info(" Program Finished ")    
-        # cambiar por preguntar al pcbtable si todos los procesos terminaro
-        
+        log.logger.info(" Program Finished ")     
         procesoCorriendo= self.kernel.pcbTable.pcbCorriendo()
         if (procesoCorriendo != None):
             procesoCorriendo.state= TERMINATED
             self.kernel.dispatcher.save(procesoCorriendo)
             
-        if (not self.kernel.readyQueue.isEmpty()) :
-            next_Pcb = self.kernel.readyQueue.dequeue()
+        # if (not self.kernel.readyQueue.isEmpty()) :
+        #     next_Pcb = self.kernel.readyQueue.dequeue()
+        #     self.kernel.dispatcher.load(next_Pcb)
+        # elif (self.kernel.pcbTable.todosTerminados()):
+        #     HARDWARE.switchOff()
+        #     log.logger.info("gantt {}" .format(self.kernel.gantt))
+        
+        if (not self.kernel.scheduler.readyQueue.isEmpty()) :
+            next_Pcb = self.kernel.scheduler.nextPcb()
             self.kernel.dispatcher.load(next_Pcb)
         elif (self.kernel.pcbTable.todosTerminados()):
             HARDWARE.switchOff()
@@ -137,8 +135,9 @@ class IoInInterruptionHandler(AbstractInterruptionHandler):
         self.ejecutarEnDispactcher() 
 
     def ejecutarEnDispactcher(self):
-        if (not self.kernel.readyQueue.isEmpty()):
-            next_Pcb = self.kernel.readyQueue.dequeue()
+        if (not self.kernel.scheduler.readyQueue.isEmpty()):
+            next_Pcb = self.kernel.scheduler.nextPcb()
+            log.logger.info("que tengo en el pcb {}". format(next_Pcb))
             self.kernel.dispatcher.load(next_Pcb)
 
         log.logger.info(self.kernel.ioDeviceController)
@@ -147,16 +146,16 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         pcb = self.kernel.ioDeviceController.getFinishedPCB()
-        log.logger.info("hola  estoy en el IoOut {}" .format(pcb))
+        self.kernel.scheduler.addPcb(pcb)          
+        self.kernel.ioDeviceController.ejecutarDeWaitingQueue()
 # si el cpu no esta libre lo encolo en la ready que sino lo mando a ejecutar|
 # sino esta running en el pcb table es q esta libre
-        if (not self.kernel.pcbTable.pcbCorriendo()): 
-            self.kernel.dispatcher.load(pcb)
-            log.logger.info("hola  estoy en el IoOut no esta corriendo{}" .format(pcb))
-        else:
-            pcb.state= READY 
-            self.kernel.readyQueue.enqueue(pcb)          
-        self.kernel.ioDeviceController.ejecutarDeWaitingQueue()
+        # if (not self.kernel.pcbTable.pcbCorriendo()): 
+        #     self.kernel.dispatcher.load(pcb)
+        # else:
+        #     pcb.state= READY 
+        #     log.logger.info("estoy encolando{}" .format(pcb))
+     
     # si hay alguien en la waitingque, lo saco
     # Lo que hay que hacer es mandar el proceso que está en ese device a la ready queue o
     # al cpu (dependiendo de si el cpu estaba ocupado o no). 
@@ -165,30 +164,35 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
 
 class NewInterruptionHandler(AbstractInterruptionHandler):
     def execute(self, irq):
-        operation = irq.parameters
-        base =self.kernel.loader.load(operation)
-        pcb = PCB(operation, base)
-        self.kernel.pcbTable.table(pcb)
-        if(self.kernel.pcbTable.pcbCorriendo() == None):
-            self.kernel.dispatcher.load(pcb)
-        else :
-            self.kernel.readyQueue.enqueue(pcb)
-            pcb.state= READY
-      
-        # log.logger.info("\n Executing program: {name}".format(name=program.name))
-        # log.logger.info("\n Executing pcbTable, estado:{}, pid:{}: , pc: {}".format(pcb.state,pcb.baseDir,pcb.pc ))
+        programa = irq.parameters["program"]
+        prioridad= irq.parameters["priority"]
+        base =self.kernel.loader.load(programa)
+        log.logger.info("la prioridad al inicio {}".format(prioridad))
+        pcb = PCB(programa, base, prioridad)
+        self.kernel.pcbTable.add(pcb)
+        self.kernel.scheduler.addPcb(pcb)
         log.logger.info(HARDWARE)
         
-    
+        #preguntarle al dispacther si puede agregarle o no
+        
+        # if(self.kernel.pcbTable.pcbCorriendo() == None):
+        #     self.kernel.dispatcher.load(pcb)
+        # else :
+        #     self.kernel.scheduler.addPcb(pcb)
+        #     # self.kernel.readyQueue.enqueue(pcb)
+        #     pcb.state= READY
+      
+        # log.logger.info("\n Executing program: {name}".format(name=program.name))
+        # log.logger.info("\n Executing pcbTable, estado:{}, pid:{}: , pc: {}, prioridad:{}".format(pcb.state,pcb.baseDir,pcb.pc,pcb.prioridad ))
 class Kernel():
 
     def __init__(self):
         self.loader = Loader()
         self.pcbTable = PCBTable()
-        self.readyQueue= ReadyQueue()
         self.dispatcher= Dispatcher()
         self.gantt= Gantt(self)
-       
+        # self.scheduler=Fcfc()
+        self.scheduler=PrioridadNoExpropiativo(self)
        
             
         ## setup interruption handlers
@@ -213,9 +217,9 @@ class Kernel():
     def ioDeviceController(self):
         return self._ioDeviceController
     
-    
-    def run(self,program):
-        newIRQ= IRQ(NEW_INTERRUPTION_TYPE, program)
+    def run(self,program,prioridad=1):
+        log.logger.info("la prioridad en el run {}". format(prioridad))
+        newIRQ= IRQ(NEW_INTERRUPTION_TYPE, {"program": program, "priority": prioridad})
         HARDWARE.interruptVector.handle(newIRQ)     
     
     ## emulates a "system call" for programs executionself.loader.load(program)
@@ -242,10 +246,8 @@ class Kernel():
         # armo pcb y le paso a pcb table el pcb
 
     def run_batch(self,batch):
-        ##si la lista no esta vacia saco el primero y lo ejecuto, y el resto lo mado al readQueue
         for i in batch:
             self.run(i)
-            
     
     def __repr__(self):
         return "Kernel "
@@ -261,21 +263,21 @@ class Loader():
             HARDWARE.memory.write(prog + self.baseDir_Proximo, inst)
         self.baseDir_Proximo += progSize
         # retorna la basedir en donde va a comenzar le siguiente programa
-        return (self.baseDir_Proximo - progSize)
-            
-# class PCB(program, base):   
+        return (self.baseDir_Proximo - progSize)          
 class PCB():   
-    def __init__(self,program,base) :
+    def __init__(self,program,base,prioridad) :
         self.pid= 0 
         self.pc = 0
         self.state = NEW
         self.baseDir = base
         self.path= program.name  
+        self.prioridad = prioridad
         
     def __repr__(self) :
-        return "pid {} state {} pc {} path {} basedir{}".format(self.pid, self.state, self.pc, self.path, self.baseDir)   
+        return "pid {} state {} pc {} path {} basedir{} prioridad {}".format(self.pid, self.state, self.pc, self.path, self.baseDir,self.prioridad)   
     
-        
+    # def setPrioridad(self,_prioridad):
+    #     self.prioridad=_prioridad   
 class PCBTable() :
     def __init__(self) :
         self._pid = 0
@@ -284,35 +286,28 @@ class PCBTable() :
     def __repr__(self) :
         return tabulate(enumerate(self.pcbs), tablefmt='psql')
              
-    def table(self, pcb):
+    def add(self, pcb):
+        log.logger.info("la prioridad del pcb en el new:  {}".format(pcb))
         _pidNuevo=self._pid
         self.pcbs[_pidNuevo] = pcb
         pcb.pid = _pidNuevo
         self._pid +=1 
                    
-        # hacer for q nos de el pcb.runnin
     def pcbCorriendo(self):
         for k,v in self.pcbs.items():
             if(v.state == RUNNING):
-                return v
-            
+                return v 
         return None
     
     def todosTerminados(self):
         for k,v in self.pcbs.items():
             if(v.state != TERMINATED):
                 return False
-                
         return True        
-                
-    # def procesosWaiting(self):
-    #     for k,v in self.pcbs.items():
-    #         if(v.state == WAITING):
-    #             return True
-
+    
 class Dispatcher() :
     def load (self,pcb):
-        log.logger.info("loading {} ".format(pcb))
+        log.logger.info("loading dispatcher {} ".format(pcb))
         HARDWARE.cpu.pc = pcb.pc
         HARDWARE.mmu.baseDir= pcb.baseDir        
         pcb.state= RUNNING
@@ -323,24 +318,19 @@ class Dispatcher() :
         HARDWARE.cpu.pc = -1
         #    # sino queda ninguno vuelve a -1, y sino incrementa
         
-        
 class ReadyQueue():
-    pcbs= []
-    # enqueue cambiar por push, encola
+    def __init__(self):
+        self.pcbs= []
+   
     def enqueue(self, pcb):
         pcb.state= READY
         self.pcbs.append(pcb)
-   
-    # dequeue cambiar pop, desencola
+        
     def dequeue (self):
         return self.pcbs.pop(0)
         
     def isEmpty(self):
         return len(self.pcbs ) == 0
-
-                
-                
-                
 class Gantt():
         
     def __init__(self,kernel):
@@ -352,48 +342,80 @@ class Gantt():
         pcbYEstado = dict()
         pcbTable = self._kernel.pcbTable.pcbs
         for pid,pcb in pcbTable.items():
-            # obtengo el valor de cuya clave es pid
-            
             pcbYEstado[pid] = pcb.state
         self._ticks.append(pcbYEstado)
   
     def __repr__(self):
         return tabulate(enumerate(self._ticks), tablefmt='grid')
-
-# Por supuesto así nomás no va a andar, tienen que cambiar las cosas según su implementación.
-
-# Además:
-#  * En la inicializacion del kernel construir un Gantt y vuardarlo en un atributo `gantt` del mismopcbsWaitingpcbsWaiting
-#  * En la inicialización del kernel tambien, agregarlo como observer del clock (a través del objeto Hardware)
-#  * En el kill handler, depsués de apagar el hardware, loguen self.kernel.gantt
-
-  
-    # recibe el pcb le cambia estado a waititng, y pone al q esta en el la lista de espera lo manda a ejecutar
     
 class WaitingQueue():
-    pcbsWaiting= []
-    # enqueue cambiar por push, encola
+    def __init__(self):
+        self.pcbsWaiting= []
+
     def enqueue(self, pcb):
-    #    pcb.state= WAITING
-       self.pcbsWaiting.append(pcb)
+        self.pcbsWaiting.append(pcb)
     
-    # dequeue cambiar pop, desencola
     def dequeue (self):
         return  self.pcbsWaiting.pop(0)
 
     def isEmpty(self):
         return len(self.pcbsWaiting ) == 0
     
-   
-class Scheduler():
-    pass
- 
+class AbstractScheduler():
+    def __init__(self,_kernel):
+        self.readyQueue=ReadyQueue()
+        self.kernel=_kernel
+    
+    def addPcb(self,pcb):
+        pass
+        
+    def nextPcb(self):    
+        return self.readyQueue.dequeue()
+        
+    def mustExpropiet(self):    
+        pass
+        
+class Fcfc(AbstractScheduler):
+    def addPcb(self,pcb):
+        log.logger.info("la prioridad del pcb es : {}".format(pcb.prioridad))
+        log.logger.info("la prioridad despues de cambiarla al  pcb es : {}".format(pcb.prioridad))
+        self.readyQueue.enqueue(pcb)
+class PrioridadNoExpropiativo(AbstractScheduler):
+        
+    def addPcb(self,pcb):
+        if(self.kernel.pcbTable.pcbCorriendo() == None):
+            self.kernel.dispatcher.load(pcb)
+        else :
+            pcb.state= READY
+            log.logger.info("la prioridad del pcb es en Prio : {}".format(pcb.prioridad))
+            i = 0
+            # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
+            while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcb.prioridad)):
+                i = i + 1        
+            self.readyQueue.pcbs.insert(i,pcb)
+        
+    
+        
+        
+        
+            
+        
+        
+            
+        
+        
+        
+
     
     
     
     
     
     
+    
+        
+        
+
     
     
     

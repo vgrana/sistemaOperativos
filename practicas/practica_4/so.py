@@ -401,8 +401,9 @@ class PrioridadExpropiativo(AbstractScheduler):
             self.kernel.dispatcher.load(pcb)
         else :
             pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
-            self.kernel.dispatcher.save(pcbCorriendo)
+            
             if(pcb.prioridad < pcbCorriendo.prioridad):
+                self.kernel.dispatcher.save(pcbCorriendo)
                 log.logger.info("hola estoy adentro del if{}" .format(pcbCorriendo))
             # # tengo q sacar el q esta en el dispacher preguntarle la prioridad, si es menor a la mia no vuelvo a meter
             # # a meter en la readyQue, sino lo agrego a la readyQue por prioridad.
@@ -415,7 +416,13 @@ class PrioridadExpropiativo(AbstractScheduler):
                 self.readyQueue.pcbs.insert(i,pcbCorriendo)
                 self.kernel.dispatcher.load(pcb)
             else:
-                self.kernel.dispatcher.load(pcbCorriendo)
+                pcb.state= READY
+                log.logger.info("la prioridad del pcb es en Prio : {}".format(pcb))
+                i = 0
+            # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
+                while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcb.prioridad)):
+                    i = i + 1        
+                self.readyQueue.pcbs.insert(i,pcb)
         
             
         

@@ -192,7 +192,8 @@ class Kernel():
         self.dispatcher= Dispatcher()
         self.gantt= Gantt(self)
         # self.scheduler=Fcfc()
-        self.scheduler=PrioridadNoExpropiativo(self)
+        # self.scheduler=PrioridadNoExpropiativo(self)
+        self.scheduler=PrioridadExpropiativo(self)
        
             
         ## setup interruption handlers
@@ -394,9 +395,27 @@ class PrioridadNoExpropiativo(AbstractScheduler):
                 i = i + 1        
             self.readyQueue.pcbs.insert(i,pcb)
         
-    
-        
-        
+class PrioridadExpropiativo(AbstractScheduler):
+    def addPcb(self,pcb):
+        if(self.kernel.pcbTable.pcbCorriendo() == None):
+            self.kernel.dispatcher.load(pcb)
+        else :
+            pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
+            self.kernel.dispatcher.save(pcbCorriendo)
+            if(pcb.prioridad < pcbCorriendo.prioridad):
+                log.logger.info("hola estoy adentro del if{}" .format(pcbCorriendo))
+            # # tengo q sacar el q esta en el dispacher preguntarle la prioridad, si es menor a la mia no vuelvo a meter
+            # # a meter en la readyQue, sino lo agrego a la readyQue por prioridad.
+                pcbCorriendo.state= READY
+                log.logger.info("la prioridad del pcb es en Prio : {}".format(pcbCorriendo))
+                i = 0
+            # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
+                while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcbCorriendo.prioridad)):
+                    i = i + 1        
+                self.readyQueue.pcbs.insert(i,pcbCorriendo)
+                self.kernel.dispatcher.load(pcb)
+            else:
+                self.kernel.dispatcher.load(pcbCorriendo)
         
             
         

@@ -30,9 +30,9 @@ if __name__ == '__main__':
     prg3 = Program("prg3.exe", [ASM.CPU(3),ASM.IO(),ASM.CPU(3)])
 
   
-    kernel.run(prg1,3)
-    kernel.run(prg2,2)
-    kernel.run(prg3,1)
+    kernel.run(prg1,5)
+    kernel.run(prg2,3)
+    kernel.run(prg3,2)
     
 
 

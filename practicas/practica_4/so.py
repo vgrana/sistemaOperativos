@@ -400,35 +400,21 @@ class PrioridadExpropiativo(AbstractScheduler):
         if(self.kernel.pcbTable.pcbCorriendo() == None):
             self.kernel.dispatcher.load(pcb)
         else :
-            pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
+             self.mustExpropiet(pcb)
+            # pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
             
-            if(pcb.prioridad < pcbCorriendo.prioridad):
-                self.kernel.dispatcher.save(pcbCorriendo)
-                log.logger.info("hola estoy adentro del if{}" .format(pcbCorriendo))
-                self.insertarPcbOrdenadoEnReadyQueue(pcbCorriendo)
-           
-           
-           
+            # if(pcb.prioridad < pcbCorriendo.prioridad):
+            #     self.kernel.dispatcher.save(pcbCorriendo)
+            #     log.logger.info("hola estoy adentro del if{}" .format(pcbCorriendo))
+            #     self.insertarPcbOrdenadoEnReadyQueue(pcbCorriendo)
+            #     self.kernel.dispatcher.load(pcb)      
+            
             # # tengo q sacar el q esta en el dispacher preguntarle la prioridad, si es menor a la mia no vuelvo a meter
             # # # a meter en la readyQue, sino lo agrego a la readyQue por prioridad.
-            #     pcbCorriendo.state= READY
-            #     log.logger.info("la prioridad del pcb es en Prio : {}".format(pcbCorriendo))
-            #     i = 0
-            # # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
-            #     while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcbCorriendo.prioridad)):
-            #         i = i + 1        
-            #     self.readyQueue.pcbs.insert(i,pcbCorriendo)
-                self.kernel.dispatcher.load(pcb)
-            else:
-                self.insertarPcbOrdenadoEnReadyQueue(pcb)
-            #     pcb.state= READY
-            #     log.logger.info("la prioridad del pcb es en Prio : {}".format(pcb))
-            #     i = 0
-            # # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
-            #     while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcb.prioridad)):
-            #         i = i + 1        
-            #     self.readyQueue.pcbs.insert(i,pcb)
-        
+     
+            # else:
+            #     self.insertarPcbOrdenadoEnReadyQueue(pcb)
+             
     def insertarPcbOrdenadoEnReadyQueue(self,pcb):
         pcb.state= READY
         log.logger.info("la prioridad del pcb es en Prio : {}".format(pcb))
@@ -439,10 +425,19 @@ class PrioridadExpropiativo(AbstractScheduler):
         self.readyQueue.pcbs.insert(i,pcb)
             
         
-        
+    def mustExpropiet(self,pcb):
+        pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
+        if(pcb.prioridad < pcbCorriendo.prioridad):
+            self.kernel.dispatcher.save(pcbCorriendo)
+            log.logger.info("hola estoy adentro del if{}" .format(pcbCorriendo))
+            self.insertarPcbOrdenadoEnReadyQueue(pcbCorriendo)
+            self.kernel.dispatcher.load(pcb)         
+        else:
+            self.insertarPcbOrdenadoEnReadyQueue(pcb)
             
         
-        
+class RoundRobin():
+    pass
         
 
     

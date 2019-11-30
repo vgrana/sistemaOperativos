@@ -187,10 +187,7 @@ class TimeOutInterruptionHandler(AbstractInterruptionHandler):
                 pcbCorriendo= self.kernel.pcbTable.pcbCorriendo()  
                 self.kernel.scheduler.expropiar(pcbCorriendo) 
             
-            self.kernel.scheduler.nextPcb()
         HARDWARE.timer.reset()
-                
-            
         
 class Kernel():
 
@@ -240,28 +237,6 @@ class Kernel():
         newIRQ= IRQ(NEW_INTERRUPTION_TYPE, {"program": program, "priority": prioridad})
         HARDWARE.interruptVector.handle(newIRQ)     
     
-    ## emulates a "system call" for programs executionself.loader.load(program)
-    #me lo lleve a newHandler
-    # def run(self, program):
-    #    
-    #     base =self.loader.load(program)
-    #     pcb = PCB(program, base)
-    #     self.pcbTable.table(pcb)
-    #     if(self.pcbTable.pcbCorriendo() == None):
-    #         self.dispatcher.load(pcb)
-    #     else :
-    #         self.readyQueue.enqueue(pcb)
-    #         pcb.state= READY
-      
-    #     log.logger.info("\n Executing program: {name}".format(name=program.name))
-    #     log.logger.info("\n Executing pcbTable, estado:{}, pid:{}: , pc: {}".format(pcb.state,pcb.baseDir,pcb.pc ))
-    #     log.logger.info(HARDWARE)
-       
-# pc al cpu o deadyQueue?
-        # set CPU program counter at program's first intruction
-     
-        
-        # armo pcb y le paso a pcb table el pcb
 
     def run_batch(self,batch):
         for i in batch:
@@ -304,7 +279,6 @@ class PCBTable() :
         return tabulate(enumerate(self.pcbs), tablefmt='psql')
              
     def add(self, pcb):
-        # log.logger.info("la prioridad del pcb en el new:  {}".format(pcb))
         _pidNuevo=self._pid
         self.pcbs[_pidNuevo] = pcb
         pcb.pid = _pidNuevo
@@ -359,7 +333,6 @@ class Gantt():
    
     def tick (self,tickNbr):
         log.logger.info("guardando información de los estados de los PCBs en el tick N {}".format(tickNbr))
-        # log.logger.info("estdo de la readyQueue {}".format(self._kernel.scheduler.readyQueue.pcbs))
         pcbYEstado = dict()
         pcbTable = self._kernel.pcbTable.pcbs
         for pid,pcb in pcbTable.items():
@@ -404,7 +377,6 @@ class Fcfc(AbstractScheduler):
             log.logger.info("la prioridad del pcb es : {}".format(pcb.prioridad))
             log.logger.info("la prioridad despues de cambiarla al  pcb es : {}".format(pcb.prioridad))
             self.readyQueue.enqueue(pcb)
-        
     
 class PrioridadNoExpropiativo(AbstractScheduler):
         
@@ -415,11 +387,9 @@ class PrioridadNoExpropiativo(AbstractScheduler):
             pcb.state= READY
             log.logger.info("la prioridad del pcb es en Prio : {}".format(pcb.prioridad))
             i = 0
-            # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
             while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcb.prioridad)):
                 i = i + 1        
             self.readyQueue.pcbs.insert(i,pcb)
-    
     
         
 class PrioridadExpropiativo(AbstractScheduler):
@@ -433,22 +403,18 @@ class PrioridadExpropiativo(AbstractScheduler):
         pcb.state= READY
         log.logger.info("la prioridad del pcb es en Prio : {}".format(pcb))
         i = 0
-            # sacar la clase readyQueue y poner todo lo q estaba adentro del scheduler
         while(i < len(self.readyQueue.pcbs)  and (self.readyQueue.pcbs[i].prioridad < pcb.prioridad)):
             i = i + 1        
         self.readyQueue.pcbs.insert(i,pcb)
-            
         
     def expropiar(self,pcb):
         pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
         if(pcb.prioridad < pcbCorriendo.prioridad):
             self.kernel.dispatcher.save(pcbCorriendo)
-            log.logger.info("hola estoy adentro del if{}" .format(pcbCorriendo))
             self.insertarPcbOrdenadoEnReadyQueue(pcbCorriendo)
             self.kernel.dispatcher.load(pcb)         
         else:
             self.insertarPcbOrdenadoEnReadyQueue(pcb)
-
 
 class RoundRobin(AbstractScheduler):
     def addPcb(self,pcb):
@@ -457,19 +423,16 @@ class RoundRobin(AbstractScheduler):
             log.logger.info("pcb a dispactcher{}".format(self.kernel.scheduler.readyQueue.pcbs) )
         else:
             self.readyQueue.enqueue(pcb)
-        #     log.logger.info("encolando pcb{}".format(self.kernel.scheduler.readyQueue.pcbs) )
-        # log.logger.info("estado de la readyQueue final {}".format(self.kernel.scheduler.readyQueue.pcbs) )
 
     def expropiar(self,pcb):
-        # log.logger.info("entre al expropiar {}".format(pcb) )
-        # si pasaron los 3 ticks saco del dispatcher y lo meto a la readyque y pongo a correr el siguiente de la lista
-        if(self.kernel.pcbTable.pcbCorriendo() !=None):
-            pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
-            self.kernel.dispatcher.save(pcbCorriendo)
-            nextPcb= self.nextPcb()
-            self.kernel.dispatcher.load(nextPcb)         
-            self.addPcb(pcbCorriendo);
-    
+        if(not self.kernel.scheduler.readyQueue.isEmpty()):
+            if(self.kernel.pcbTable.pcbCorriendo() !=None):
+                pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
+                self.kernel.dispatcher.save(pcbCorriendo)           
+                self.addPcb(pcbCorriendo);
+                nextPcb= self.nextPcb()
+                self.kernel.dispatcher.load(nextPcb)         
+        
         
 
     

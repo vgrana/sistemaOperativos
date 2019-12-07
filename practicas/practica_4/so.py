@@ -164,9 +164,9 @@ class Kernel():
         self.gantt= Gantt(self)
         # self.scheduler=Fcfc(self)
         # self.scheduler=PrioridadNoExpropiativo(self)
-        self.scheduler=PrioridadExpropiativo(self)
-        # self.scheduler=RoundRobin(self)
-        # HARDWARE.timer.quantum=3
+        # self.scheduler=PrioridadExpropiativo(self)
+        self.scheduler=RoundRobin(self)
+        HARDWARE.timer.quantum=3
         
        
             
@@ -334,8 +334,11 @@ class AbstractScheduler():
         if(self.kernel.pcbTable.pcbCorriendo() == None):
             self.kernel.dispatcher.load(pcb)
         else:
-            self.readyQueue.enqueue(pcb)
+            self.addForSon(pcb)
         
+    def addForSon(self,pcb):
+        pass
+    
     def nextPcb(self):    
         return self.readyQueue.dequeue()
         
@@ -343,26 +346,20 @@ class AbstractScheduler():
         pass
         
 class Fcfc(AbstractScheduler):
-    def __init__(self, addPcb):
-        AbstractScheduler.__init__(self, addPcb)
-    
+            
+    def addForSon(self,pcb):
+        self.readyQueue.enqueue(pcb)
+        
 class PrioridadNoExpropiativo(AbstractScheduler):
         
-    def addPcb(self,pcb):
-        if(self.kernel.pcbTable.pcbCorriendo() == None):
-            self.kernel.dispatcher.load(pcb)
-        else :
-            self.readyQueue.insertarOrdenado(pcb)
-    
+    def addForSon(self,pcb):
+        self.readyQueue.insertarOrdenado(pcb)
     
 class PrioridadExpropiativo(AbstractScheduler):
-    def addPcb(self,pcb):
-        if(self.kernel.pcbTable.pcbCorriendo() == None):
-            self.kernel.dispatcher.load(pcb)
-        else :
-            self.expropiar(pcb)
-                        
-            
+   
+    def addForSon(self, pcb):
+        self.expropiar(pcb)
+                         
     def expropiar(self,pcb):
         pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
         if(pcb.prioridad < pcbCorriendo.prioridad):
@@ -373,12 +370,11 @@ class PrioridadExpropiativo(AbstractScheduler):
             self.readyQueue.insertarOrdenado(pcb)
 
 class RoundRobin(AbstractScheduler):
-    def __init__(self, addPcb):
-        AbstractScheduler.__init__(self, addPcb)
+    def addForSon(self,pcb):
+        self.readyQueue.enqueue(pcb)
 
     def expropiar(self,pcb):
-        if(not self.kernel.scheduler.readyQueue.isEmpty()):
-            if(self.kernel.pcbTable.pcbCorriendo() !=None):
+        if(not self.kernel.scheduler.readyQueue.isEmpty()) and (self.kernel.pcbTable.pcbCorriendo() !=None):
                 pcbCorriendo=self.kernel.pcbTable.pcbCorriendo()
                 self.kernel.dispatcher.save(pcbCorriendo)           
                 self.addPcb(pcbCorriendo);
